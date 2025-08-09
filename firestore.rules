@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1) STAGING collection
+    match /staging/{docId} {
+      allow write: if true;
+      allow read: if request.auth != null && request.auth.uid == docId;
+    }
+
+    // 2) PUBLIC_PROFILES collection
+    match /public_profiles/{profileId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == profileId;
+    }
+
+    // 3) PRIVATE_PROFILES collection
+    match /private_profiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 4) EVENTS collection
+    match /events/{eventId} {
+      allow read: if true; // public read
+      allow write: if request.auth != null; // must be logged in
+    }
+
+    // 5) USER_EVENTS collection
+    match /user_events/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 6) user_venues collection
+    match /user_venues/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 7) PROFILES collection
+    match /profiles/{userId} {
+      allow read: if true; // public read
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 8) INVITED_USERS collection
+    match /invited_users/{eventId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 9) TICKETS collection
+    match /tickets/{eventId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 10) EVENT_COMMENTS collection
+    match /event_comments/{eventId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 11) USER_INVITE_LISTS collection
+    match /user_invite_lists/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /lists/{listId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // 12) VENUES collection
+    match /venues/{venueId} {
+      allow read: if true; // public read
+      allow write: if request.auth != null
+                   && request.auth.uid == request.resource.data.ownerId;
+    }
+
+    // 13) EVENT_WAITLISTS collection
+    match /event_waitlists/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      match /entries/{entryId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // 14) MANAGED_USERS collection
+    match /managed_users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 15) CREATOR_PROFILES collection
+    match /creator_profiles/{creatorUid} {
+      // Public read so anyone can see the creator's info
+      allow read: if true;
+      // Only user with matching uid can write
+      allow write: if request.auth != null && request.auth.uid == creatorUid;
+
+      // If you store "stores" in a subcollection, add this:
+      match /stores/{storeId} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == creatorUid;
+      }
+    }
+
+  }
+}
