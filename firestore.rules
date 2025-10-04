@@ -481,181 +481,42 @@ service cloud.firestore {
     }
 
     // ============================================================================
-    // TEST COLLECTIONS - Mirror production rules with _test suffix
+    // TEST COLLECTIONS - Wide open permissions for testing (data doesn't matter)
     // ============================================================================
 
-    // TEST: CREATOR_PROFILES collection
-    match /creator_profiles_test/{creatorUid} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == creatorUid;
-      allow delete: if request.auth != null && request.auth.uid == creatorUid;
-      
-      allow update: if request.auth != null && (
-        request.auth.uid != creatorUid &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followersCount', 'lastUpdated'])
-      );
-
-      match /stores/{storeId} {
-        allow read: if true;
-        allow write, delete: if request.auth != null && request.auth.uid == creatorUid;
-      }
-      
-      match /followers/{followerId} {
-        allow read: if request.auth != null;
-        allow write, delete: if request.auth != null && (
-          request.auth.uid == followerId ||
-          request.auth.uid == creatorUid
-        );
-      }
-      match /following/{followingId} {
-        allow read: if request.auth != null;
-        allow write, delete: if request.auth != null && (
-          request.auth.uid == followingId ||
-          request.auth.uid == creatorUid
-        );
-      }
+    // TEST: All test collections - wide open for authenticated users
+    match /creator_profiles_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: EVENTS collection
-    match /events_test/{eventId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-      allow delete: if request.auth != null && 
-        (request.auth.uid == resource.data.hostUid || 
-         request.auth.uid == resource.data.creatorId);
+    match /events_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: USER_EVENTS collection
-    match /user_events_test/{userId} {
-      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    match /user_events_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: TICKETS collection
-    match /tickets_test/{eventId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-      allow delete: if request.auth != null && 
-        (request.auth.uid == resource.data.userId ||
-         request.auth.uid == resource.data.hostUid);
+    match /tickets_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: TRANSACTIONS collection
-    match /transactions_test/{transactionId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == resource.data.userId ||
-        request.auth.uid == resource.data.sellerId ||
-        request.auth.uid == resource.data.hostUid
-      );
-      allow write: if request.auth != null;
-      allow delete: if request.auth != null && 
-        request.auth.uid == resource.data.userId;
+    match /transactions_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: NOTIFICATIONS collection
-    match /notifications_test/{notificationId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-      allow delete: if request.auth != null && 
-        request.auth.uid == resource.data.recipientId;
+    match /notifications_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: SAVED_INVITE_LISTS collection
-    match /saved_invite_lists_test/{userId} {
-      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    match /saved_invite_lists_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: PROFILES collection (consumer app)
-    match /profiles_test/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
-      allow delete: if request.auth != null && request.auth.uid == userId;
-      
-      match /followingUsers/{followId} {
-        allow read: if request.auth != null;
-        allow write, delete: if request.auth != null && (
-          request.auth.uid == userId || 
-          request.auth.uid == followId
-        );
-      }
-      match /followersUsers/{followerId} {
-        allow read: if request.auth != null;
-        allow write, delete: if request.auth != null && (
-          request.auth.uid == userId || 
-          request.auth.uid == followerId
-        );
-      }
-      match /connections/{connectionId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write, delete: if request.auth != null && (
-          request.auth.uid == userId || 
-          request.auth.uid == connectionId
-        );
-      }
-      match /followingCreators/{followId} {
-        allow read: if request.auth != null;
-        allow write, delete: if request.auth != null && (
-          request.auth.uid == userId ||
-          true
-        );
-      }
-      match /followingCreatorStores/{followId} {
-        allow read: if request.auth != null;
-        allow write, delete: if request.auth != null && (
-          request.auth.uid == userId ||
-          true
-        );
-      }
-      match /followersCreators/{followId} {
-        allow read: if request.auth != null;
-        allow write, delete: if request.auth != null && (
-          request.auth.uid == userId ||
-          true
-        );
-      }
-      match /followersCreatorStores/{followId} {
-        allow read: if request.auth != null;
-        allow write, delete: if request.auth != null && (
-          request.auth.uid == userId ||
-          true
-        );
-      }
+    match /profiles_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: USERS collection
-    match /users_test/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
-      allow delete: if request.auth != null && request.auth.uid == userId;
-      
-      match /transactions/{transactionId} {
-        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
-      }
+    match /users_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: CHATS collection
-    match /chats_test/{chatId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-      allow delete: if request.auth != null && (
-        request.auth.uid in resource.data.participants
-      );
-      
-      match /messages/{messageId} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null;
-        allow delete: if request.auth != null;
-      }
+    match /chats_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
-
-    // TEST: EVENT_RSVPS collection
-    match /event_rsvps_test/{rsvpId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null
-        && resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+    match /event_rsvps_test/{document=**} {
+      allow read, write, delete: if request.auth != null;
     }
   }
 }
